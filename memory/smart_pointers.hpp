@@ -263,9 +263,7 @@ public:
   }
 
   ~IntrusivePtr() {
-    if (m_ptr) {
-      m_ptr->release_ref();
-    }
+    if (m_ptr) m_ptr->release_ref();
   }
 
   IntrusivePtr& operator=(const IntrusivePtr& other) noexcept {
