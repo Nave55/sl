@@ -9,20 +9,24 @@ public:
 
 public:
   UniquePtr()
-      : ptr(new T()) {}
+      : ptr{new T()} {}
 
   explicit UniquePtr(T* raw)
       : ptr{raw} {}
 
   explicit UniquePtr(T val)
-      : ptr(new T(val)) {}
+      : ptr{new T(val)} {}
+
+  ~UniquePtr() {
+    delete (ptr);
+  }
 
   UniquePtr(const UniquePtr&) = delete;
 
   UniquePtr& operator=(const UniquePtr&) = delete;
 
   UniquePtr(UniquePtr&& other) noexcept
-      : ptr(other.ptr) {
+      : ptr{other.ptr} {
     other.ptr = nullptr;
   }
 
@@ -33,10 +37,6 @@ public:
       other.ptr = nullptr;
     }
     return *this;
-  }
-
-  ~UniquePtr() {
-    delete (ptr);
   }
 
   T& operator*() const noexcept {
@@ -70,25 +70,27 @@ private:
 
 public:
   SharedPtr()
-      : ptr(nullptr),
-        m_cb(nullptr) {}
+      : ptr{nullptr},
+        m_cb{nullptr} {}
 
   explicit SharedPtr(T* raw)
-      : ptr(raw) {
-    m_cb =
-        new ControlBlock{1, 1, [](void* p) { delete static_cast<T*>(p); }, raw};
+      : ptr{raw} {
+    m_cb = new ControlBlock{1, 1, [](void* p) { delete static_cast<T*>(p); }, raw};
+  }
+
+  ~SharedPtr() {
+    m_release();
   }
 
   template <typename... Args>
   explicit SharedPtr(Args&&... args)
-      : ptr(new T(std::forward<Args>(args)...)) {
-    m_cb =
-        new ControlBlock{1, 1, [](void* p) { delete static_cast<T*>(p); }, ptr};
+      : ptr{new T(std::forward<Args>(args)...)} {
+    m_cb = new ControlBlock{1, 1, [](void* p) { delete static_cast<T*>(p); }, ptr};
   }
 
   SharedPtr(const SharedPtr& other) noexcept
-      : ptr(other.ptr),
-        m_cb(other.m_cb) {
+      : ptr{other.ptr},
+        m_cb{other.m_cb} {
     if (m_cb) m_cb->strong.fetch_add(1);
   }
 
@@ -103,8 +105,8 @@ public:
   }
 
   SharedPtr(SharedPtr&& other) noexcept
-      : ptr(other.ptr),
-        m_cb(other.m_cb) {
+      : ptr{other.ptr},
+        m_cb{other.m_cb} {
     other.ptr = nullptr;
     other.m_cb = nullptr;
   }
@@ -118,10 +120,6 @@ public:
       other.m_cb = nullptr;
     }
     return *this;
-  }
-
-  ~SharedPtr() {
-    m_release();
   }
 
   uint32_t getWeakCount() const {
@@ -162,15 +160,15 @@ private:
 
 public:
   WeakPtr()
-      : m_cb(nullptr) {}
+      : m_cb{nullptr} {}
 
   explicit WeakPtr(const SharedPtr<T>& sp)
-      : m_cb(sp.m_cb) {
+      : m_cb{sp.m_cb} {
     if (m_cb) m_cb->weak.fetch_add(1);
   }
 
   explicit WeakPtr(const WeakPtr& other)
-      : m_cb(other.m_cb) {
+      : m_cb{other.m_cb} {
     if (m_cb) m_cb->weak.fetch_add(1);
   }
 
@@ -232,7 +230,7 @@ public:
 
 protected:
   RefCounted() noexcept
-      : m_refcount(0) {}
+      : m_refcount{0} {}
   virtual ~RefCounted() = default;
 };
 
@@ -243,22 +241,22 @@ private:
 
 public:
   IntrusivePtr() noexcept
-      : m_ptr(nullptr) {}
+      : m_ptr{nullptr} {}
 
   explicit IntrusivePtr(T* p, bool add_ref = true)
-      : m_ptr(p) {
+      : m_ptr{p} {
     if (m_ptr && add_ref) {
       m_ptr->add_ref();
     }
   }
 
   IntrusivePtr(const IntrusivePtr& other) noexcept
-      : m_ptr(other.m_ptr) {
+      : m_ptr{other.m_ptr} {
     if (m_ptr) m_ptr->add_ref();
   }
 
   IntrusivePtr(IntrusivePtr&& other) noexcept
-      : m_ptr(other.m_ptr) {
+      : m_ptr{other.m_ptr} {
     other.m_ptr = nullptr;
   }
 
