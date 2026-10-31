@@ -248,7 +248,7 @@ struct Tracking_Allocator final : public Memory_Allocator {
 // *******************************************************
 
 class Arena_Allocator final : public Memory_Allocator {
-  friend class TempArena;
+  friend class Temp_Arena;
 
 private:
   unsigned char* m_buf = nullptr;
@@ -373,24 +373,24 @@ public:
 };
 
 // TempArena (checkpoint / rollback)
-class TempArena {
+class Temp_Arena {
 private:
   Arena_Allocator& arena;
   size_t m_prev_off, m_curr_off;
 
 public:
-  TempArena(Arena_Allocator& a)
+  Temp_Arena(Arena_Allocator& a)
       : arena(a),
         m_prev_off(a.m_prev_off),
         m_curr_off(a.m_curr_off) {}
 
-  ~TempArena() {
+  ~Temp_Arena() {
     arena.m_prev_off = m_prev_off;
     arena.m_curr_off = m_curr_off;
   }
 
-  TempArena(const TempArena&) = delete;
-  TempArena& operator=(const TempArena&) = delete;
+  Temp_Arena(const Temp_Arena&) = delete;
+  Temp_Arena& operator=(const Temp_Arena&) = delete;
 };
 
 // *******************************************************
@@ -405,7 +405,7 @@ struct StackHeader {
 };
 
 class Stack_Allocator final : public Memory_Allocator {
-  friend class TempStack;
+  friend class Temp_Stack;
 
 private:
   unsigned char* m_buf = nullptr;
@@ -625,22 +625,22 @@ private:
   }
 };
 
-class TempStack {
+class Temp_Stack {
 private:
   Stack_Allocator& m_stack;
   size_t m_curr_offset;
 
 public:
-  TempStack(Stack_Allocator& stack)
+  Temp_Stack(Stack_Allocator& stack)
       : m_stack{stack},
         m_curr_offset{stack.m_curr_off} {}
 
-  ~TempStack() {
+  ~Temp_Stack() {
     m_stack.m_curr_off = m_curr_offset;
   }
 
-  TempStack(const TempStack&) = delete;
-  TempStack& operator=(const TempStack&) = delete;
+  Temp_Stack(const Temp_Stack&) = delete;
+  Temp_Stack& operator=(const Temp_Stack&) = delete;
 };
 
 // ********************************************
@@ -652,7 +652,7 @@ struct PoolFreeNode {
 };
 
 class Pool_Allocator final : public Memory_Allocator {
-  friend class TempPool;
+  friend class Temp_Pool;
 
 private:
   unsigned char* m_buf = nullptr;
@@ -763,18 +763,18 @@ public:
   }
 };
 
-class TempPool {
+class Temp_Pool {
 private:
   Pool_Allocator& m_pool;
   PoolFreeNode* m_marker = nullptr;
 
 public:
-  explicit TempPool(Pool_Allocator& p)
+  explicit Temp_Pool(Pool_Allocator& p)
       : m_pool(p) {
     m_marker = m_pool.m_head;
   }
 
-  ~TempPool() {
+  ~Temp_Pool() {
     m_pool.m_head = m_marker;
   }
 };
