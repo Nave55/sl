@@ -18,13 +18,13 @@ private:
   Hash m_hash = Hash{};
   KeyEq m_eq = KeyEq{};
   m_Node* m_free = nullptr;
-  MemAllocator* m_alloc;
+  Memory_Allocator* m_alloc;
   m_Node** m_buckets;
   Vector<void*> m_slabs;
 
 public:
   explicit HashSet(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
-                   MemAllocator& alloc = heap_alloc) noexcept
+                   Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
         bucket_amt(m_nextPow2(bucket_amt)),
         m_alloc(&alloc),
@@ -41,13 +41,13 @@ public:
   }
 
   explicit HashSet(std::initializer_list<K> init, size_t bucket_amt = 64,
-                   MemAllocator& alloc = heap_alloc) noexcept
+                   Memory_Allocator& alloc = heap_alloc) noexcept
       : HashSet(init.size(), 1, bucket_amt, alloc) {
     for (const K& key : init) insert(key);
   }
 
   explicit HashSet(std::initializer_list<K> init, size_t slab_size, size_t slabs = 4,
-                   size_t bucket_amt = 64, MemAllocator& alloc = heap_alloc) noexcept
+                   size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
       : HashSet(slab_size, slabs, bucket_amt, alloc) {
     for (const K& key : init) insert(key);
   }
