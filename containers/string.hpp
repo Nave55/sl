@@ -8,7 +8,7 @@
 
 class String {
 private:
-  MemAllocator* m_alloc;
+  Memory_Allocator* m_alloc;
 
 public:
   size_t len = 0;
@@ -22,7 +22,7 @@ public:
   // ptr[len] == '\0'
 
   // empty string with initial capacity (including room for '\0')
-  explicit String(size_t init_cap = 16, MemAllocator& alloc = heap_alloc) noexcept
+  explicit String(size_t init_cap = 16, Memory_Allocator& alloc = heap_alloc) noexcept
       : m_alloc{&alloc},
         len{0},
         cap{std::max<size_t>(1, init_cap)},
@@ -34,7 +34,7 @@ public:
   }
 
   // from C-string
-  explicit String(const char* str, MemAllocator& alloc = heap_alloc) noexcept
+  explicit String(const char* str, Memory_Allocator& alloc = heap_alloc) noexcept
       : m_alloc{&alloc},
         len{std::strlen(str)},
         cap{std::max<size_t>(1, len)},
@@ -46,7 +46,7 @@ public:
   }
 
   // from C-string
-  explicit String(const char* str, size_t init_cap, MemAllocator& alloc = heap_alloc) noexcept
+  explicit String(const char* str, size_t init_cap, Memory_Allocator& alloc = heap_alloc) noexcept
       : m_alloc{&alloc},
         len{std::strlen(str)} {
     if (init_cap < len) panic("String(cap): capacity too small for input string");
