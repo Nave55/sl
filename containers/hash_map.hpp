@@ -18,14 +18,14 @@ private:
   struct m_Node;
   Hash m_hash = Hash{};
   KeyEq m_eq = KeyEq{};
-  m_Node* m_free = nullptr;  // free list head
-  MemAllocator* m_alloc;     // custom allocator
+  m_Node* m_free = nullptr;   // free list head
+  Memory_Allocator* m_alloc;  // custom allocator
   m_Node** m_buckets;
   Vector<void*> m_slabs;  // raw slab pointers
 
 public:
   explicit HashMap(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
-                   MemAllocator& alloc = heap_alloc) noexcept
+                   Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
         bucket_amt(m_nextPow2(bucket_amt)),
         m_alloc(&alloc),
@@ -42,14 +42,14 @@ public:
   }
 
   explicit HashMap(std::initializer_list<Pair<K, V>> init, size_t bucket_amt = 64,
-                   MemAllocator& alloc = heap_alloc) noexcept
+                   Memory_Allocator& alloc = heap_alloc) noexcept
       : HashMap(init.size(), 1, bucket_amt, alloc) {
     for (auto& [k, v] : init) insert(k, v);
     slab_bytes = slab_size * sizeof(m_Node);
   }
 
   explicit HashMap(std::initializer_list<Pair<K, V>> init, size_t slab_size, size_t slabs = 4,
-                   size_t bucket_amt = 64, MemAllocator& alloc = heap_alloc) noexcept
+                   size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
       : HashMap(slab_size, slabs, bucket_amt, alloc) {
     for (auto& [k, v] : init) insert(k, v);
     slab_bytes = slab_size * sizeof(m_Node);
