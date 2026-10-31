@@ -51,9 +51,9 @@ enum class AllocType {
 //                  Allocator Interface
 // *******************************************************
 
-class MemAllocator {
+class Memory_Allocator {
 public:
-  virtual ~MemAllocator() = default;
+  virtual ~Memory_Allocator() = default;
 
   virtual void* allocate(size_t bytes, size_t alignment) noexcept = 0;
 
@@ -71,13 +71,13 @@ public:
 //                      Heap Allocator
 // *******************************************************
 
-struct Heap final : public MemAllocator {
-  Heap() = default;
-  ~Heap() = default;
-  Heap(const Heap&) = delete;
-  Heap(Heap&&) = delete;
-  Heap& operator=(const Heap&) = delete;
-  Heap& operator=(Heap&&) = delete;
+struct Heap_Allocator final : public Memory_Allocator {
+  Heap_Allocator() = default;
+  ~Heap_Allocator() = default;
+  Heap_Allocator(const Heap_Allocator&) = delete;
+  Heap_Allocator(Heap_Allocator&&) = delete;
+  Heap_Allocator& operator=(const Heap_Allocator&) = delete;
+  Heap_Allocator& operator=(Heap_Allocator&&) = delete;
 
   void* allocate(size_t bytes, size_t = 0) noexcept override {
     return std::malloc(bytes);
@@ -128,19 +128,19 @@ struct Heap final : public MemAllocator {
 // *******************************************************
 
 // uses a header to track allocations, so adds 8 bytes per allocation
-struct Tracking final : public MemAllocator {
+struct Tracking_Allocator final : public Memory_Allocator {
   size_t user_bytes = 0;  // user bytes allocated
   size_t user_freed = 0;  // user bytes freed
   size_t heap_bytes = 0;  // total bytes allocated
   size_t heap_freed = 0;  // total bytes freed
 
-  Tracking() = default;
-  ~Tracking() = default;
+  Tracking_Allocator() = default;
+  ~Tracking_Allocator() = default;
 
-  Tracking(const Tracking&) = delete;
-  Tracking(Tracking&&) = delete;
-  Tracking& operator=(const Tracking&) = delete;
-  Tracking& operator=(Tracking&&) = delete;
+  Tracking_Allocator(const Tracking_Allocator&) = delete;
+  Tracking_Allocator(Tracking_Allocator&&) = delete;
+  Tracking_Allocator& operator=(const Tracking_Allocator&) = delete;
+  Tracking_Allocator& operator=(Tracking_Allocator&&) = delete;
 
   void* allocate(size_t bytes, size_t = 0) noexcept override {
     const size_t total_bytes = bytes + sizeof(size_t);
@@ -247,7 +247,7 @@ struct Tracking final : public MemAllocator {
 //                   Arena Allocator
 // *******************************************************
 
-class Arena final : public MemAllocator {
+class Arena_Allocator final : public Memory_Allocator {
   friend class TempArena;
 
 private:
@@ -257,20 +257,20 @@ private:
   size_t m_curr_off = 0;
 
 public:
-  Arena(size_t buf_size = MB)
+  Arena_Allocator(size_t buf_size = MB)
       : m_buf_len(buf_size) {
     m_buf = static_cast<unsigned char*>(
         ::operator new[](m_buf_len, std::align_val_t{DEFAULT_ALIGNMENT}));
   }
 
-  ~Arena() {
+  ~Arena_Allocator() {
     ::operator delete[](m_buf, std::align_val_t{DEFAULT_ALIGNMENT});
   }
 
-  Arena(const Arena&) = delete;
-  Arena(Arena&&) = delete;
-  Arena& operator=(const Arena&) = delete;
-  Arena& operator=(Arena&&) = delete;
+  Arena_Allocator(const Arena_Allocator&) = delete;
+  Arena_Allocator(Arena_Allocator&&) = delete;
+  Arena_Allocator& operator=(const Arena_Allocator&) = delete;
+  Arena_Allocator& operator=(Arena_Allocator&&) = delete;
 
   void* allocate(size_t size, size_t alignment) noexcept override {
     if (size == 0) panic("Size must be greater than zero");
@@ -375,11 +375,11 @@ public:
 // TempArena (checkpoint / rollback)
 class TempArena {
 private:
-  Arena& arena;
+  Arena_Allocator& arena;
   size_t m_prev_off, m_curr_off;
 
 public:
-  TempArena(Arena& a)
+  TempArena(Arena_Allocator& a)
       : arena(a),
         m_prev_off(a.m_prev_off),
         m_curr_off(a.m_curr_off) {}
@@ -404,7 +404,7 @@ struct StackHeader {
   size_t alloc_size;   // size of allocation
 };
 
-class Stack final : public MemAllocator {
+class Stack_Allocator final : public Memory_Allocator {
   friend class TempStack;
 
 private:
@@ -413,20 +413,20 @@ private:
   size_t m_curr_off = 0;
 
 public:
-  explicit Stack(size_t buf_size = MB) noexcept
+  explicit Stack_Allocator(size_t buf_size = MB) noexcept
       : m_buf_len{buf_size} {
     m_buf = static_cast<unsigned char*>(
         ::operator new[](m_buf_len, std::align_val_t{DEFAULT_ALIGNMENT}));
   }
 
-  ~Stack() {
+  ~Stack_Allocator() {
     ::operator delete[](m_buf, std::align_val_t{DEFAULT_ALIGNMENT});
   }
 
-  Stack(const Stack&) = delete;
-  Stack(Stack&&) = delete;
-  Stack& operator=(const Stack&) = delete;
-  Stack& operator=(Stack&&) = delete;
+  Stack_Allocator(const Stack_Allocator&) = delete;
+  Stack_Allocator(Stack_Allocator&&) = delete;
+  Stack_Allocator& operator=(const Stack_Allocator&) = delete;
+  Stack_Allocator& operator=(Stack_Allocator&&) = delete;
 
   void* allocate(size_t size, size_t alignment = DEFAULT_ALIGNMENT) noexcept override {
     if (!isPowerOfTwo(alignment)) panic("Must be a power of two");
@@ -627,11 +627,11 @@ private:
 
 class TempStack {
 private:
-  Stack& m_stack;
+  Stack_Allocator& m_stack;
   size_t m_curr_offset;
 
 public:
-  TempStack(Stack& stack)
+  TempStack(Stack_Allocator& stack)
       : m_stack{stack},
         m_curr_offset{stack.m_curr_off} {}
 
@@ -651,7 +651,7 @@ struct PoolFreeNode {
   PoolFreeNode* next;
 };
 
-class Pool final : public MemAllocator {
+class Pool_Allocator final : public Memory_Allocator {
   friend class TempPool;
 
 private:
@@ -661,8 +661,8 @@ private:
   PoolFreeNode* m_head = nullptr;
 
 public:
-  explicit Pool(size_t buf_size = MB, size_t chunk_size = 64,
-                size_t chunk_alignment = alignof(std::max_align_t)) {
+  explicit Pool_Allocator(size_t buf_size = MB, size_t chunk_size = 64,
+                          size_t chunk_alignment = alignof(std::max_align_t)) {
     if (buf_size <= 0) panic("Buf size <= 0");
     if (chunk_size <= 0) panic("Chunk size <= 0");
     if (!isPowerOfTwo(chunk_alignment)) panic("chunk_alignment must be power of two");
@@ -677,14 +677,14 @@ public:
     memFreeAll();
   }
 
-  ~Pool() {
+  ~Pool_Allocator() {
     ::operator delete[](m_buf, std::align_val_t{alignof(std::max_align_t)});
   }
 
-  Pool(const Pool&) = delete;
-  Pool(Pool&&) = delete;
-  Pool& operator=(const Pool&) = delete;
-  Pool& operator=(Pool&&) = delete;
+  Pool_Allocator(const Pool_Allocator&) = delete;
+  Pool_Allocator(Pool_Allocator&&) = delete;
+  Pool_Allocator& operator=(const Pool_Allocator&) = delete;
+  Pool_Allocator& operator=(Pool_Allocator&&) = delete;
 
   void* allocate(size_t = 0, size_t = 0) noexcept override {
     if (!m_head) return nullptr;
@@ -765,11 +765,11 @@ public:
 
 class TempPool {
 private:
-  Pool& m_pool;
+  Pool_Allocator& m_pool;
   PoolFreeNode* m_marker = nullptr;
 
 public:
-  explicit TempPool(Pool& p)
+  explicit TempPool(Pool_Allocator& p)
       : m_pool(p) {
     m_marker = m_pool.m_head;
   }
@@ -781,4 +781,4 @@ public:
 
 #undef MIN
 
-extern Heap heap_alloc;
+extern Heap_Allocator heap_alloc;
