@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-struct MemoryTracker {
+struct Memory_Tracker {
   size_t ttl = 0;
   size_t freed = 0;
 
