@@ -1,39 +1,64 @@
 #pragma once
 
-#include <span>
-#include "../containers/pair.hpp"
 #include "../containers/str.hpp"
 #include "../containers/string.hpp"
 
-inline void printValue(int v) noexcept {
+// prints mostly for use in container prints
+inline void printDigit(int v) noexcept {
   printf("%d", v);
 }
 
-inline void printValue(size_t v) noexcept {
+inline void printSizet(size_t v) noexcept {
   printf("%zu", v);
 }
 
-inline void printValue(float v) noexcept {
+inline void printFloat(float v) noexcept {
   printf("%f", v);
 }
 
-inline void printValue(double v) noexcept {
-  printf("%f", v);
-}
-
-inline void printValue(const char* s) noexcept {
+inline void printCharStar(const char* s) noexcept {
   printf("%s", s);
 }
 
-inline void printValue(char c) noexcept {
+inline void printChar(char c) noexcept {
   printf("%c", c);
 }
 
-inline void printValue(String s) noexcept {
+inline void printString(String s) noexcept {
+  s.print();
+}
+
+// overloads for generic printing
+template <size_t N>
+inline void printStr(Str<N> s) noexcept {
+  s.print();
+}
+
+inline void printVal(int v) noexcept {
+  printf("%d", v);
+}
+
+inline void printVal(size_t v) noexcept {
+  printf("%zu", v);
+}
+
+inline void printVal(float v) noexcept {
+  printf("%f", v);
+}
+
+inline void printVal(const char* s) noexcept {
+  printf("%s", s);
+}
+
+inline void printVal(char c) noexcept {
+  printf("%c", c);
+}
+
+inline void printVal(String s) noexcept {
   s.print();
 }
 
 template <size_t N>
-inline void printValue(Str<N> s) noexcept {
+inline void printVal(Str<N> s) noexcept {
   s.print();
 }
