@@ -4,7 +4,7 @@
 #include "../memory/allocators.hpp"
 
 constexpr Pair<const char*, const char*> splitOnce(const char* str, const char* delim,
-                                                   MemAllocator& alloc = heap_alloc) {
+                                                   Memory_Allocator& alloc = heap_alloc) {
   const char* d = std::strstr(str, delim);
   if (!d) return {str, nullptr};
 
@@ -12,8 +12,8 @@ constexpr Pair<const char*, const char*> splitOnce(const char* str, const char* 
   size_t delim_len = std::strlen(delim);
   const char* right = d + delim_len;
 
-  char* left = static_cast<char*>(alloc.memAllocate(left_len + 1, alignof(char*)));
-  char* right_copy = static_cast<char*>(alloc.memAllocate(std::strlen(right) + 1, alignof(char*)));
+  char* left = static_cast<char*>(alloc.allocate(left_len + 1, alignof(char*)));
+  char* right_copy = static_cast<char*>(alloc.allocate(std::strlen(right) + 1, alignof(char*)));
 
   std::memcpy(left, str, left_len);
   left[left_len] = '\0';
