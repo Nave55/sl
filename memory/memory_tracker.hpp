@@ -8,29 +8,29 @@ struct MemoryTracker {
   size_t freed = 0;
 
   template <typename T>
-  auto alloc(T val) -> T* {
+  T* alloc(T val) noexcept {
     ttl += sizeof(T);
     return new T(val);
   }
 
   template <typename T>
-  auto dealloc(T* memory) -> void {
+  void dealloc(T* memory) noexcept {
     freed += sizeof(T);
     delete memory;
   }
 
-  auto malloc(size_t size) -> void* {
+  void* malloc(size_t size) noexcept {
     ttl += size;
     return std::malloc(size);
   }
 
   template <typename T>
-  auto free(T* memory) -> void {
+  void free(T* memory) noexcept {
     freed += sizeof(T);
     std::free(memory);
   }
 
-  void memReport() const {
+  void memReport() const noexcept {
     std::printf("Memory Usage:\n");
     std::printf("  Allocated: %zu bytes\n", ttl);
     std::printf("  Freed:     %zu bytes\n", freed);
