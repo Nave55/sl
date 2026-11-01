@@ -9,10 +9,10 @@
 - **Custom Allocators** - Arena, Pool, Stack, Heap, Tracking
 - **Custom Pmr Allocator** - Arena
 - **Array** - Array<T, N>
-- **Fixed Dynamic Array** - FixedVector\<T, N>
+- **Fixed Dynamic Array** - Fixed_Vector\<T, N>
 - **Dynamic Array** - Vector\<T>
-- **Hash Table** - HashMap\<K, V>
-- **Hash Set** - HashSet\<V> 
+- **Hash Table** - Hash_Map\<K, V>
+- **Hash Set** - Hash_Set\<V> 
 - **Dynamic String** - String
 - **Fixed Size String** - Str\<N>
 - **Pair** - Pair<T1, T2>
