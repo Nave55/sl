@@ -3,7 +3,7 @@
 #include "vector.hpp"
 
 template <typename K, typename Hash = std::hash<K>, typename KeyEq = std::equal_to<K>>
-class HashSet {
+class Hash_Set {
 public:
   struct Iterator;
   struct ConstIterator;
@@ -23,8 +23,8 @@ private:
   Vector<void*> m_slabs;
 
 public:
-  explicit HashSet(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
-                   Memory_Allocator& alloc = heap_alloc) noexcept
+  explicit Hash_Set(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
+                    Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
         bucket_amt(m_nextPow2(bucket_amt)),
         m_alloc(&alloc),
@@ -40,19 +40,19 @@ public:
     slab_bytes = slab_size * sizeof(m_Node);
   }
 
-  explicit HashSet(std::initializer_list<K> init, size_t bucket_amt = 64,
-                   Memory_Allocator& alloc = heap_alloc) noexcept
-      : HashSet(init.size(), 1, bucket_amt, alloc) {
+  explicit Hash_Set(std::initializer_list<K> init, size_t bucket_amt = 64,
+                    Memory_Allocator& alloc = heap_alloc) noexcept
+      : Hash_Set(init.size(), 1, bucket_amt, alloc) {
     for (const K& key : init) insert(key);
   }
 
-  explicit HashSet(std::initializer_list<K> init, size_t slab_size, size_t slabs = 4,
-                   size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
-      : HashSet(slab_size, slabs, bucket_amt, alloc) {
+  explicit Hash_Set(std::initializer_list<K> init, size_t slab_size, size_t slabs = 4,
+                    size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
+      : Hash_Set(slab_size, slabs, bucket_amt, alloc) {
     for (const K& key : init) insert(key);
   }
 
-  ~HashSet() noexcept {
+  ~Hash_Set() noexcept {
     clear();
 
     if (m_alloc->canAlwaysFree()) {
@@ -64,7 +64,7 @@ public:
     }
   }
 
-  HashSet(const HashSet& o) noexcept
+  Hash_Set(const Hash_Set& o) noexcept
       : len(0),
         cap(0),
         slab_bytes(o.slab_bytes),
@@ -90,14 +90,14 @@ public:
     }
   }
 
-  HashSet& operator=(const HashSet& o) noexcept {
+  Hash_Set& operator=(const Hash_Set& o) noexcept {
     if (this == &o) return *this;
-    HashSet tmp(o);
+    Hash_Set tmp(o);
     *this = std::move(tmp);
     return *this;
   }
 
-  HashSet(HashSet&& o) noexcept
+  Hash_Set(Hash_Set&& o) noexcept
       : len(o.len),
         cap(o.cap),
         slab_bytes(o.slab_bytes),
@@ -120,10 +120,10 @@ public:
     o.m_buckets = nullptr;
   }
 
-  HashSet& operator=(HashSet&& o) noexcept {
+  Hash_Set& operator=(Hash_Set&& o) noexcept {
     if (this == &o) return *this;
-    this->~HashSet();
-    new (this) HashSet(std::move(o));
+    this->~Hash_Set();
+    new (this) Hash_Set(std::move(o));
     return *this;
   }
 
@@ -144,15 +144,15 @@ public:
   }
 
   // union
-  HashSet operator|(const HashSet& other) const noexcept {
-    HashSet result(*this);
+  Hash_Set operator|(const Hash_Set& other) const noexcept {
+    Hash_Set result(*this);
     for (const auto& key : other) result.insert(key);
     return result;
   }
 
   // intersection
-  HashSet operator&(const HashSet& other) const noexcept {
-    HashSet result(slab_size, m_slabs.cap, bucket_amt, *m_alloc);
+  Hash_Set operator&(const Hash_Set& other) const noexcept {
+    Hash_Set result(slab_size, m_slabs.cap, bucket_amt, *m_alloc);
 
     for (const auto& key : *this)
       if (other.contains(key)) result.insert(key);
@@ -160,7 +160,7 @@ public:
     return result;
   }
 
-  bool operator==(const HashSet& other) const noexcept {
+  bool operator==(const Hash_Set& other) const noexcept {
     for (const auto& key : other) {
       if (!this->contains(key)) return false;
     }
@@ -287,7 +287,7 @@ public:
 
 public:
   struct Iterator {
-    using Self = HashSet<K, Hash, KeyEq>;
+    using Self = Hash_Set<K, Hash, KeyEq>;
 
     Self* set;
     size_t bucket;
@@ -321,7 +321,7 @@ public:
   };
 
   struct ConstIterator {
-    using Self = HashSet<K, Hash, KeyEq>;
+    using Self = Hash_Set<K, Hash, KeyEq>;
 
     const Self* set;
     size_t bucket;
