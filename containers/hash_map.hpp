@@ -4,7 +4,7 @@
 #include "vector.hpp"
 
 template <typename K, typename V, typename Hash = std::hash<K>, typename KeyEq = std::equal_to<K>>
-class HashMap {
+class Hash_Map {
 public:
   struct Iterator;
   struct ConstIterator;
@@ -24,8 +24,8 @@ private:
   Vector<void*> m_slabs;  // raw slab pointers
 
 public:
-  explicit HashMap(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
-                   Memory_Allocator& alloc = heap_alloc) noexcept
+  explicit Hash_Map(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
+                    Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
         bucket_amt(m_nextPow2(bucket_amt)),
         m_alloc(&alloc),
@@ -41,21 +41,21 @@ public:
     slab_bytes = slab_size * sizeof(m_Node);
   }
 
-  explicit HashMap(std::initializer_list<Pair<K, V>> init, size_t bucket_amt = 64,
-                   Memory_Allocator& alloc = heap_alloc) noexcept
-      : HashMap(init.size(), 1, bucket_amt, alloc) {
+  explicit Hash_Map(std::initializer_list<Pair<K, V>> init, size_t bucket_amt = 64,
+                    Memory_Allocator& alloc = heap_alloc) noexcept
+      : Hash_Map(init.size(), 1, bucket_amt, alloc) {
     for (auto& [k, v] : init) insert(k, v);
     slab_bytes = slab_size * sizeof(m_Node);
   }
 
-  explicit HashMap(std::initializer_list<Pair<K, V>> init, size_t slab_size, size_t slabs = 4,
-                   size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
-      : HashMap(slab_size, slabs, bucket_amt, alloc) {
+  explicit Hash_Map(std::initializer_list<Pair<K, V>> init, size_t slab_size, size_t slabs = 4,
+                    size_t bucket_amt = 64, Memory_Allocator& alloc = heap_alloc) noexcept
+      : Hash_Map(slab_size, slabs, bucket_amt, alloc) {
     for (auto& [k, v] : init) insert(k, v);
     slab_bytes = slab_size * sizeof(m_Node);
   }
 
-  ~HashMap() noexcept {
+  ~Hash_Map() noexcept {
     clear();
 
     if (m_alloc->canAlwaysFree()) {
@@ -67,7 +67,7 @@ public:
     }
   }
 
-  HashMap(const HashMap& o) noexcept
+  Hash_Map(const Hash_Map& o) noexcept
       : len(0),
         cap(0),
         slab_bytes(o.slab_bytes),
@@ -94,14 +94,14 @@ public:
     }
   }
 
-  HashMap& operator=(const HashMap& o) noexcept {
+  Hash_Map& operator=(const Hash_Map& o) noexcept {
     if (this == &o) return *this;
-    HashMap tmp(o);
+    Hash_Map tmp(o);
     *this = std::move(tmp);
     return *this;
   }
 
-  HashMap(HashMap&& o) noexcept
+  Hash_Map(Hash_Map&& o) noexcept
       : len(o.len),
         cap(o.cap),
         slab_bytes(o.slab_bytes),
@@ -123,10 +123,10 @@ public:
     o.slab_bytes = 0;
   }
 
-  HashMap& operator=(HashMap&& o) noexcept {
+  Hash_Map& operator=(Hash_Map&& o) noexcept {
     if (this == &o) return *this;
-    this->~HashMap();
-    new (this) HashMap(std::move(o));
+    this->~Hash_Map();
+    new (this) Hash_Map(std::move(o));
     return *this;
   }
 
@@ -147,7 +147,7 @@ public:
     return cap - len;
   }
 
-  bool operator==(const HashMap& other) const noexcept {
+  bool operator==(const Hash_Map& other) const noexcept {
     if (len != other.len) return false;
 
     for (const auto& [k, v] : other) {
@@ -387,11 +387,11 @@ public:
   }
 
   struct Iterator {
-    HashMap* map;
+    Hash_Map* map;
     size_t bucket;
     m_Node* node;
 
-    Iterator(HashMap* m, size_t b, m_Node* n) noexcept
+    Iterator(Hash_Map* m, size_t b, m_Node* n) noexcept
         : map(m),
           bucket(b),
           node(n) {}
@@ -422,11 +422,11 @@ public:
   };
 
   struct ConstIterator {
-    const HashMap* map;
+    const Hash_Map* map;
     size_t bucket;
     const m_Node* node;
 
-    ConstIterator(const HashMap* m, size_t b, const m_Node* n) noexcept
+    ConstIterator(const Hash_Map* m, size_t b, const m_Node* n) noexcept
         : map(m),
           bucket(b),
           node(n) {}
