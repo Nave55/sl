@@ -321,7 +321,7 @@ public:
     panic("Arena Can't use free");
   }
 
-  void memFreeAll() noexcept {
+  void freeAll() noexcept {
     m_prev_off = m_curr_off = 0;
   }
 
@@ -552,7 +552,7 @@ public:
     m_curr_off = header->prev_offset;
   }
 
-  void memFreeAll() noexcept {
+  void freeAll() noexcept {
     m_curr_off = 0;
   }
 
@@ -674,7 +674,7 @@ public:
 
     if (m_chunk_size < sizeof(PoolFreeNode)) panic("chunk_size too small for free list node");
 
-    memFreeAll();
+    freeAll();
   }
 
   ~Pool_Allocator() {
@@ -706,7 +706,7 @@ public:
     m_head = node;
   }
 
-  void memFreeAll() noexcept {
+  void freeAll() noexcept {
     m_head = nullptr;
     size_t count = m_buf_len / m_chunk_size;
     for (size_t i = 0; i < count; ++i) {
