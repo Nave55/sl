@@ -694,8 +694,10 @@ public:
   }
 
   template <typename T>
-  T* alloc() {
-    return static_cast<T*>(allocate());
+  T* alloc(const T& val) {
+    T* p = static_cast<T*>(allocate());
+    *p = val;
+    return p;
   }
 
   void free(void* ptr) noexcept override {
