@@ -8,11 +8,11 @@ class Hash_Map {
 public:
   struct Iterator;
   struct ConstIterator;
-  size_t len = 0;         // amount of entries in hashmap
-  size_t cap = 0;         // total node capacity
-  size_t slab_bytes = 0;  // bytes per slab
-  size_t slab_size;       // nodes per slab
-  size_t bucket_amt;      // number of buckets
+  size_t len = 0;          // amount of entries in hashmap
+  size_t cap = 0;          // total node capacity
+  size_t slab_bytes = 0;   // bytes per slab
+  size_t slab_size = 32;   // nodes per slab
+  size_t bucket_amt = 64;  // number of buckets
 
 private:
   struct m_Node;
@@ -24,6 +24,20 @@ private:
   Vector<void*> m_slabs;  // raw slab pointers
 
 public:
+  explicit Hash_Map(Memory_Allocator& alloc) noexcept
+      : m_alloc(&alloc),
+        m_buckets(static_cast<m_Node**>(
+            alloc.allocate(sizeof(m_Node*) * this->bucket_amt, alignof(m_Node*)))),
+        m_slabs(0, 4, alloc) {
+    if (!m_buckets) panic("UnorderedMap: bucket allocation failed");
+    for (size_t i = 0; i < this->bucket_amt; ++i) m_buckets[i] = nullptr;
+
+    if (sizeof(m_Node) % alignof(m_Node) != 0)
+      panic("UnorderedMap: Node size must be multiple of alignment");
+
+    slab_bytes = slab_size * sizeof(m_Node);
+  }
+
   explicit Hash_Map(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
                     Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
@@ -130,23 +144,6 @@ public:
     return *this;
   }
 
-  template <typename PrintKey, typename PrintVal>
-  void print(PrintKey printKey, PrintVal printVal) const noexcept {
-    std::printf("HashMap {\n");
-    for (auto&& [k, v] : *this) {
-      std::printf("  ");
-      printKey(k);
-      std::printf(" => ");
-      printVal(v);
-      std::printf("\n");
-    }
-    std::printf("}\n");
-  }
-
-  size_t remaining_capacity() const noexcept {
-    return cap - len;
-  }
-
   bool operator==(const Hash_Map& other) const noexcept {
     if (len != other.len) return false;
 
@@ -198,8 +195,35 @@ public:
     return newNode->value;
   }
 
+  template <typename PrintKey, typename PrintVal>
+  void print(PrintKey printKey, PrintVal printVal) const noexcept {
+    std::printf("HashMap {\n");
+    for (auto&& [k, v] : *this) {
+      std::printf("  ");
+      printKey(k);
+      std::printf(" => ");
+      printVal(v);
+      std::printf("\n");
+    }
+    std::printf("}\n");
+  }
+
+  void printInfo() const noexcept {
+    std::printf("Slabs: %zu\n", m_slabs.len);
+    std::printf("Slab Size: %zu\n", slab_size);
+    std::printf("Bucket Amt: %zu\n", bucket_amt);
+  }
+
   size_t size() const noexcept {
     return len;
+  }
+
+  size_t slabAmt() const noexcept {
+    return m_slabs.len;
+  }
+
+  size_t remainingCapacity() const noexcept {
+    return cap - len;
   }
 
   void insert(const K& key, const V& value) noexcept {
