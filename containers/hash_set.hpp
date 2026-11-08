@@ -10,8 +10,8 @@ public:
   size_t len = 0;
   size_t cap = 0;
   size_t slab_bytes = 0;
-  size_t slab_size;
-  size_t bucket_amt;
+  size_t slab_size = 32;
+  size_t bucket_amt = 64;
 
 private:
   struct m_Node;
@@ -23,6 +23,20 @@ private:
   Vector<void*> m_slabs;
 
 public:
+  explicit Hash_Set(Memory_Allocator& alloc) noexcept
+      : m_alloc(&alloc),
+        m_buckets(static_cast<m_Node**>(
+            alloc.allocate(sizeof(m_Node*) * this->bucket_amt, alignof(m_Node*)))),
+        m_slabs(0, 4, alloc) {
+    if (!m_buckets) panic("HashSet: bucket allocation failed");
+    for (size_t i = 0; i < this->bucket_amt; ++i) m_buckets[i] = nullptr;
+
+    if (sizeof(m_Node) % alignof(m_Node) != 0)
+      panic("UnorderedSet: Node size must be multiple of alignment");
+
+    slab_bytes = slab_size * sizeof(m_Node);
+  }
+
   explicit Hash_Set(size_t slab_size = 32, size_t slabs = 4, size_t bucket_amt = 64,
                     Memory_Allocator& alloc = heap_alloc) noexcept
       : slab_size(slab_size),
@@ -127,22 +141,6 @@ public:
     return *this;
   }
 
-  size_t size() const noexcept {
-    return len;
-  }
-
-  template <typename PrintFn>
-  void print(PrintFn printFn) const noexcept {
-    size_t id = 0;
-    std::printf("HashSet { ");
-    for (auto&& k : *this) {
-      printFn(k);
-      if (id < len - 1) std::printf(", ");
-      id++;
-    }
-    std::printf(" }\n");
-  }
-
   // union
   Hash_Set operator|(const Hash_Set& other) const noexcept {
     Hash_Set result(*this);
@@ -165,6 +163,36 @@ public:
       if (!this->contains(key)) return false;
     }
     return true;
+  }
+
+  template <typename PrintFn>
+  void print(PrintFn printFn) const noexcept {
+    size_t id = 0;
+    std::printf("HashSet { ");
+    for (auto&& k : *this) {
+      printFn(k);
+      if (id < len - 1) std::printf(", ");
+      id++;
+    }
+    std::printf(" }\n");
+  }
+
+  void printInfo() const noexcept {
+    std::printf("Slabs: %zu\n", m_slabs.len);
+    std::printf("Slab Size: %zu\n", slab_size);
+    std::printf("Bucket Amt: %zu\n", bucket_amt);
+  }
+
+  size_t size() const noexcept {
+    return len;
+  }
+
+  size_t slabAmt() const noexcept {
+    return m_slabs.len;
+  }
+
+  size_t remainingCapacity() const noexcept {
+    return cap - len;
   }
 
   bool contains(const K& key) const noexcept {
