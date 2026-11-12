@@ -7,6 +7,10 @@ struct Vec2 {
   T x;
   T y;
 
+  bool operator==(const Vec2& other) const {
+    return x == other.x && y == other.y;
+  }
+
   constexpr Vec2 operator+(const Vec2& vec2) const noexcept {
     return {x + vec2.x, y + vec2.y};
   }
@@ -38,6 +42,10 @@ struct Vec3 {
   T x;
   T y;
   T z;
+  
+  bool operator==(const Vec3& other) const {
+    return x == other.x && y == other.y && z == other.z;
+  }
 
   constexpr Vec3 operator+(const Vec3& vec3) const noexcept {
     return {x + vec3.x, y + vec3.y, z + vec3.z};
